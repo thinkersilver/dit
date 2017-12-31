@@ -50,7 +50,23 @@ def cmd(params):
     cmd = params[0]
     params = shift(params)
     print len(params)
-    
+
+
+    if cmd == "init":
+        site_name = "."
+        create_dir(site_name)
+        create_dir("%s/content" % site_name)
+        create_dir("%s/images"  % site_name)
+        create_dir("%s/assets"  % site_name)
+
+
+        import ditio
+        package_site_dir = "%s/site" % os.path.dirname(os.path.abspath(ditio.__file__))
+        print site_name,"->",  package_site_dir 
+        
+        os.system("cp -dpR %s/*  %s" % (package_site_dir, site_name))
+
+
     if cmd == "new":
         site_name = params[0]
         create_dir(site_name)
