@@ -6,9 +6,8 @@
 
 
 
-from distutils.core import setup
-
-import json;
+from setuptools  import setup
+import json
 
 
 
@@ -33,7 +32,13 @@ setup(
     packages=[package_name],
 
     scripts=['bin/%s' % package_name],
+    description="Publish articles",
 
-    description="Knowledge Representation Tool"
+    include_package_data=True,
+    package_data={
+        package_name: ["site/*.*"] } 
+    
+    ,exclude_package_data={
+        package_name: ["site/node_modules/*"] } 
 
 ) 

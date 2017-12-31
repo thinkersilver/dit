@@ -4,9 +4,6 @@
 #name: sveny_io_example
 #package: ditio 
 #date:  2017-06-23
-import pandas as pd
-x = [1,-20,3,3,40,5,6,6]
-pd.Series(x).plot()
 #package: $PACKAGE_NAME
 import os
 import json
@@ -42,7 +39,7 @@ def meta_get(nb):
     if len(missing_props)  > 0:
         print "Missing Properties"
         print "\n".join([  " * %s" %  k for k in missing_props])
-        raise KeyError("Missing properities:  %s"  % str(missing_props) ) 
+        #raise KeyError("Missing properities:  %s"  % str(missing_props) ) 
     return properties
 #package: $PACKAGE_NAME
 # def meta_get(nb):
@@ -210,6 +207,12 @@ def base(meta,f):
         meta.update( {"name":f.rsplit(".",1)[0].replace(" ","_")} )
     if "title" not in meta:
         meta.update( {"title":f.rsplit(".",1)[0]} ) 
+    
+    if "package" not in meta: 
+        meta.update( {"package": "pkg_%s" % meta["name"] } ) 
+    if "date" not in meta: 
+        from datetime import datetime
+        meta.update( {"date":  str(datetime.now())  } )  
     return meta
         
     
@@ -325,14 +328,12 @@ def push_assets(meta,path):
     #package_dir = "%s/%s" %
     
     export_asset_dir = path + "/assets/%s" % meta["name"]
-    copytree(content_dir,export_asset_dir)
-    
-    
+    import os;  os.system("cp -dpR  %s %s" % (content_dir,export_asset_dir))
+#   copytree(content_dir,export_asset_dir)
 #     for f in os.listdir(content_dir):
 #         src = content_dir + "/" + f
 #         dst = path + "/assets/%s" %f 
-#         print "* %s -> %s " % (src,dst)  
-        
+#         print "* %s -> %s " % (src,dst)          
 #         copyfile(content_dir + "/" + f, path + "/assets/%s" %f  )
     
     pass
@@ -424,7 +425,7 @@ def cmd_publish(params):
     publish(meta,notebook,export_path)
     print "[DONE]"
     
-    
+
 def cmd_dist_install(params):
     print "Package install ... "
     nb_fname = params[0]
@@ -439,7 +440,3 @@ def cmd_dist_install(params):
     print asset_path
     
     print "[DONE]"
-#INCLUDE
-import pandas as pd
-x = [1,2,3,3,4,5,6,6]
-pd.Series(x).plot()
