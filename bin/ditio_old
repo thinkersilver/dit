@@ -1,0 +1,89 @@
+#!/usr/bin/python
+
+import sys 
+import traceback
+from ditio import *
+import ditio.site  as site 
+
+#MAIN
+
+
+
+
+def exception_to_string(excp):
+
+    stack = traceback.extract_stack()[:-3] + traceback.extract_tb(excp.__traceback__)  # add limit=?? 
+
+    pretty = traceback.format_list(stack)
+
+    return ''.join(pretty) + '\n  {} {}'.format(excp.__class__,excp)
+
+
+
+if __name__ == "__main__":
+
+    args = sys.argv[1:]
+
+    
+
+    if len(args) < 1:
+
+        print "Usage: dit publish $NOTEBOOK $DIT_IO_HOME"
+
+        import sys; sys.exit(0)
+
+
+
+    class Commands:
+
+        EXPORT="export"
+        PUBLISH="publish"
+        PUSH="push"
+        INFO="info"
+        DIST_INSTALL="dist-install"
+        SITE="site"
+
+
+
+    def cmd_undefined(params):
+        print "No cmd handlers for parameters %s " % params
+        import sys;sys.exit(1);
+
+    opts = {
+        Commands.EXPORT: cmd_export,
+        Commands.PUSH: cmd_push, 
+        Commands.PUBLISH: cmd_publish,
+        Commands.INFO: cmd_info,
+        Commands.DIST_INSTALL: cmd_dist_install,
+        Commands.SITE:  site.cmd 
+    }
+
+
+
+    if args[0] not in opts.keys():
+
+        print "Could not parse: %s " % str(args)
+
+        import sys; sys.exit(1)   
+
+
+
+
+
+
+
+    execute = lambda cmd,params : opts[cmd](params)
+
+    try:
+        execute(args[0],args[1:])
+
+    except Exception as e :
+
+        print e
+        print "Error!"
+
+        T, V, TB = sys.exc_info()
+
+        print ''.join(traceback.format_exception(T,V,TB))
+
+    

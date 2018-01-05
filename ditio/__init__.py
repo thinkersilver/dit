@@ -9,6 +9,21 @@ import os
 import json
 from shutil import copyfile
 import re 
+
+
+__log_debug__ = True 
+
+def set_verbose(boolean):
+    global __log_debug__ 
+    __log_debug__ = boolean 
+def is_verbose_log():
+    global __log_debug__ 
+    return __log_debug__ 
+def debug(line):
+    global __log_debug__ 
+    if __log_debug__ == True:
+        print line 
+
 markdown_image_matcher = re.compile('.*\!\[.*\]\((.*)\)')
 open_notebook = lambda f_name : json.loads(open(f_name).read())
 markdown_get = lambda notebook : [ "\n".join(c['source']) for c in notebook['cells']  if c["cell_type"] == u'markdown' ]
@@ -37,8 +52,7 @@ def meta_get(nb):
             missing_props.append(k)
             
     if len(missing_props)  > 0:
-        print "Missing Properties"
-        print "\n".join([  " * %s" %  k for k in missing_props])
+        debug("\n".join([  "Warning property [%s] is missing" %  k for k in missing_props]))
         #raise KeyError("Missing properities:  %s"  % str(missing_props) ) 
     return properties
 #package: $PACKAGE_NAME
@@ -298,7 +312,7 @@ def export_markdown(meta,notebook):
         f.write("---\n")
         f.write(src)
 def export_images(meta,notebook):
-    print "Exporting Images ... "
+    debug("Exporting Images ... ")
     global markdown_image_matcher
     property_excludes = ["path"]
     join_str = lambda lines : "\n".join([l.strip() for l in lines])
@@ -316,13 +330,12 @@ def export_images(meta,notebook):
         src_fname = "%s/%s" % (meta["path"],img) 
         if img.find("http") > -1 :
             continue 
-        print "%s -> %s " % (src_fname,dest_fname)            
         copyfile(src_fname,dest_fname)
         
         
     
 def push_assets(meta,path):
-    print "Pushing Assets ... [%s]" % path 
+    debug("Pushing Assets ... %s" % path )
     content_dir = "%s/assets"  % (export_path_get(meta))
     
     #package_dir = "%s/%s" %
@@ -337,21 +350,29 @@ def push_assets(meta,path):
 #         copyfile(content_dir + "/" + f, path + "/assets/%s" %f  )
     
     pass
-def push_markdown(meta,path):
-    print "Pushing Markdown ... [%s]" % path 
+
+def push_markdown_only(meta,path):
     content_dir = "%s/content"  % (export_path_get(meta))
     for md in os.listdir(content_dir):
-        print "* %s" % md 
+        debug("- %s/%s" % (path,md))
+        copyfile(content_dir + "/" + md, path + "/%s" %md  )
+        
+    pass
+
+def push_markdown(meta,path):
+    debug("Pushing Markdown ... [%s]" % path)
+    content_dir = "%s/content"  % (export_path_get(meta))
+    for md in os.listdir(content_dir):
+        debug("- %s" % md)
         copyfile(content_dir + "/" + md, path + "/content/%s" %md  )
     pass
 def push_images(meta,path):
-    print "Pushing Images... [%s]" % path 
+    debug("Pushing Images.")
     content_dir = "%s/images"  % (export_path_get(meta))
     for img in os.listdir(content_dir):
         from_to_message = "%s->%s" % (content_dir + "/" + img, path + "/images/%s" % img  )
-        print "* ",from_to_message 
+        debug("* %s " % from_to_message )
         copyfile(content_dir + "/" + img, path + "/images/%s" % img  )
-    print "."
     pass
 def export(meta,notebook):
     export_code(meta,notebook)
@@ -362,12 +383,37 @@ def export(meta,notebook):
 def push(meta,path):
     push_assets(meta,path)
     push_markdown(meta,path)
+    print 
     push_images(meta,path)
     
     
 def publish(meta,notebook,export_path):
     export(meta,notebook)
     push(meta,export_path)
+
+def publish_markdown(meta,notebook,export_path):
+    export(meta,notebook)
+    push_markdown_only(meta,export_path)
+
+    # clean markdown 
+    for md in os.listdir(export_path):
+        path_to_md = export_path + "/" + md 
+        if os.path.isdir(path_to_md):
+            continue 
+
+        lines =  enumerate(open(path_to_md ).readlines())
+        for l in lines:
+            if l[1].find("---") == 0:
+                break 
+        with open(path_to_md,'w') as f:
+            for pos,l in lines:
+                f.write(l) 
+    if os.path.exists(export_path +  "/images") is False:
+        os.mkdir(export_path + "/images" ) 
+    push_images(meta,export_path)
+
+
+
 #package: $APP 
 join = lambda sep,arr:  sep.join(arr)
 def cmd_info(params):
@@ -382,23 +428,21 @@ def cmd_info(params):
 def cmd_export(params):
     nb_fname = params[0]
     
-    print "Exporting ...",
+    #print "Exporting ...",
     notebook = open_notebook(nb_fname)
     meta = meta_get(notebook)
     meta = base(meta,nb_fname)
     
     meta.update({"path": get_path(nb_fname)})
-    print meta 
-    print export_path_get(meta)
     mkdirs(meta,notebook)
     export(meta,notebook)
     
-    print "[DONE]"
+    #print "[DONE]"
 def cmd_push(params):
     nb_fname = params[0]
     export_path = params[1]
     
-    print "Pushing ...",
+    #print "Pushing ...",
     notebook = open_notebook(nb_fname)
     meta = meta_get(notebook)
     meta = base(meta,nb_fname)
@@ -408,9 +452,28 @@ def cmd_push(params):
     meta.update({"path": get_path(nb_fname)})
     mkdirs(meta,notebook)
     push(meta,export_path)
-    print "[DONE]"
+
+
+def cmd_publish_all(params):
+    cmd_publish(params) 
+def cmd_publish_markdown(params):
+    debug("Publishing markdown  ...")
+    nb_fname = params[0]
+    export_path = params[1]
+    
+    notebook = open_notebook(nb_fname)
+    meta = meta_get(notebook)
+    meta = base(meta,nb_fname)
+    
+    
+    #meta.update({"path":"./"})
+    meta.update({"path": get_path(nb_fname)})
+    mkdirs(meta,notebook)    
+
+    publish_markdown(meta,notebook,export_path)
+   
+
 def cmd_publish(params):
-    print "Publishing ...",
     nb_fname = params[0]
     export_path = params[1]
     
@@ -423,11 +486,10 @@ def cmd_publish(params):
     meta.update({"path": get_path(nb_fname)})
     mkdirs(meta,notebook)    
     publish(meta,notebook,export_path)
-    print "[DONE]"
     
 
 def cmd_dist_install(params):
-    print "Package install ... "
+    #print "Package install ... "
     nb_fname = params[0]
     export_path = params[1]
     
@@ -437,6 +499,5 @@ def cmd_dist_install(params):
     meta.update({"path": get_path(nb_fname)})
     asset_path = "%s/%s" % (export_path_get(meta),"assets")
     import os; os.system("cd %s; python setup.py install;cd - "  % asset_path)
-    print asset_path
+    debug(asset_path)
     
-    print "[DONE]"
