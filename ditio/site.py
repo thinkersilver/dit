@@ -21,15 +21,15 @@ def index(site_dir):
     
     verify(site_dir)
     content_dir = SitePaths.CONTENT_DIR % site_dir
+    index = []
     for md in os.listdir(content_dir):
         if md.find(".md")  < 0:
             continue 
         print " * ", md 
         full_path= "%s/%s"  % (content_dir,md)
-        index = []
         with open( full_path,'r') as f:
             meta = {} 
-            for line in f.readlines():
+            for line in f:
                 if line.find("---") == 0:
                     break                 
                 if line.strip() == "":
@@ -37,13 +37,26 @@ def index(site_dir):
                 
                 (k,v) = line.strip().split(":",1)
                 meta[k] = v.strip()
-                
+           
             if len(meta) > 0:
+
+                line_count=3
+                preview = "" 
+                for line in f:
+                    if line.find('#') > -1:
+                        continue
+                    if line_count < 0  :
+                        break 
+                    preview=  preview + " " + line 
+                    line_count = line_count - 1 
+
+                meta["preview"] = preview  
                 meta["file"]=md.split(".md")[0]
                 index.append(meta)
-                index_file = "%s/index.json" % (content_dir)
-                with open(index_file,'w') as f:
-                    f.write(json.dumps(index))
+    index_file = "%s/index.json" % (content_dir)
+    with open(index_file,'w') as f:
+        f.write(json.dumps(index))
+    print "article-count:%s" % len(index)
     print "[DONE]"
 
 def cmd(params):
