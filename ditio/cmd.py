@@ -29,6 +29,16 @@ class CommandLine(object):
         params = [ p for p in args if p.find('-') != 0  ]
         return (opts, params)
 
+    def preview(args):
+        set_verbose(False) 
+        opts, params = CommandLine.extract(args)
+
+        notebook_fname = args[0]
+        call(["site","new",".preview.io"])
+        call(["publish",notebook_fname,".preview.io"])
+        call(["site","index",".preview.io"])
+        call(["site","server",".preview.io"])
+        
     def publish(args):
 
         set_verbose(False) 
@@ -46,7 +56,7 @@ class CommandLine(object):
         site index """
         opts, params = CommandLine.extract(args)
         p = params[0]
-        if p in ('new', 'index'):
+        if p in ('new', 'index','server'):
             site.cmd(params)
         else:
             print 'Command [%s] not recognised ' % p

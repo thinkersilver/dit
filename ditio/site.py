@@ -57,8 +57,7 @@ def index(site_dir):
     with open(index_file,'w') as f:
         f.write(json.dumps(index))
     print "article-count:%s" % len(index)
-    print "[DONE]"
-
+    print "" 
 def cmd(params):
     cmd = params[0]
     params = shift(params)
@@ -109,7 +108,7 @@ def cmd(params):
             site_dir = params[0]
             site_port = params[1]
         
-        print "Starting Server on .... %s" % str(site_port)
+        print "Starting Server on .... http://127.0.0.1:%s/" % str(site_port)
         os.system("cd %s;  python -m SimpleHTTPServer %s" % (site_dir,site_port)    )
         print cmd
     pass 

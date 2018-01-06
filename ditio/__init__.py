@@ -121,15 +121,25 @@ def get_filtered_cells(meta,notebook,img_write=False):
     # mark down rendering 
     image_cell_neighbours = dict(image_proximity_find(cells_all))
     code_cell_neighbours = dict(code_proximity_find(cells_all))
-    markdown_cells = dict(cells_markdown)
+    
+    import copy
+    markdown_cells = copy.deepcopy(dict(cells_markdown))
     for cell in cells_markdown:
         _id = cell[0]
         if _id in code_cell_neighbours:
             markdown_cells[_id]["source"].append("\n")
             markdown_cells[_id]["source"].append("\n\t```\n")
-            markdown_cells[_id]["source"].extend(map(lambda d:  "\t" + d ,  code_cell_neighbours[_id]["data"]))
+
+            if code_cell_neighbours[_id]["data"][0].find("#INCLUDE") == 0:
+                code_lines= code_cell_neighbours[_id]["data"][1:]
+            else:
+                code_lines= code_cell_neighbours[_id]["data"]
+
+            #markdown_cells[_id]["source"].extend(map(lambda d:  "\t" + d ,  code_cell_neighbours[_id]["data"]))
+            markdown_cells[_id]["source"].extend(map(lambda d:  "\t" + d ,  code_lines ))
             markdown_cells[_id]["source"].append("\n\t```\n")
             markdown_cells[_id]["source"].append("\n")
+
             code_cell_neighbours.pop(_id)
         if _id in image_cell_neighbours:
             
@@ -145,7 +155,6 @@ def get_filtered_cells(meta,notebook,img_write=False):
             markdown_cells[_id]["source"].append("\n")
             
             image_cell_neighbours.pop(_id)
-            
     final_cells = {} 
     final_cells.update(markdown_cells)
     final_cells.update(cells_code_main)
