@@ -288,7 +288,12 @@ def export_code(meta,notebook):
     code = "\n".join([ '#!/usr/bin/python\n' ,"from %s import *" % meta["package"],code])
     with open(package_script_file,'w') as f:
         f.write(code)    
-                                       
+
+
+    package_manifest = "%s/assets/%s"   % (export_path_get(meta),"MANIFEST.in" )
+    with open(package_manifest,'w') as f:
+        f.write("include *.json")
+
 import json
 def export_meta(meta):
     package_meta_file = "%s/assets/%s"   % (export_path_get(meta),"config.json" )

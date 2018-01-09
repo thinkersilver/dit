@@ -27,7 +27,7 @@ setup(
 
     author="thinkersilver",
 
-    author_email="thinkersilver AT somehwere",
+    author_email="myonlineprofile2012@gmail.com",
 
     packages=[package_name],
 
@@ -36,7 +36,8 @@ setup(
 
     include_package_data=True,
     package_data={
-        package_name: ["site/*.*"] } 
+        package_name: ["site/*.*"],
+        '':['config.json']} 
     
     ,exclude_package_data={
         package_name: ["site/node_modules/*"] } 
